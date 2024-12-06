@@ -19,6 +19,7 @@ import (
 
 var found_hosts []common.Host
 var rsa_pub_key string
+var chosen_hosts_index int
 
 func check_id_rsa() error {
 	current_user, err := user.Current()
@@ -55,7 +56,7 @@ func check_id_rsa() error {
 
 func get_hosts() {
 	rows, err := common.DB.Query(`select h.host, i.useip, i.dns, i.ip from hosts h, interface i
-		where h.hostid = i.hostid and i.main = 1 and i.type = 1 and h.host LIKE 'auto.linux%'`)
+		where h.hostid = i.hostid and i.main = 1 and i.type = 1 and h.host LIKE 'auto.linux.agent.%'`)
 	if err != nil {
 		fmt.Println("Failed in quering hosts, Error:", err.Error())
 		os.Exit(1)
@@ -74,8 +75,9 @@ func get_hosts() {
 }
 
 func get_host(hostname string) *common.Host {
-	for _, host := range found_hosts {
+	for index, host := range found_hosts {
 		if hostname == host.Host_name {
+			chosen_hosts_index = index
 			return &host
 		}
 	}
@@ -84,6 +86,11 @@ func get_host(hostname string) *common.Host {
 }
 
 func ask_userinput_hostname() string {
+	if len(found_hosts) == 0 {
+		fmt.Println("No hosts to register, exiting...")
+		os.Exit(0)
+	}
+
 	fmt.Println("Found hosts:")
 	for index, host := range found_hosts {
 		fmt.Printf("%d) %s\n", index+1, host.Host_name)
@@ -93,17 +100,18 @@ func ask_userinput_hostname() string {
 	return lib.Ask_usrinput_string("Enter hostname to register")
 }
 
-func check_duplicated_hosts(temp_hosts []common.Host, temp_host common.Host) *[]common.Host {
-	for _, host := range temp_hosts {
+func check_duplicated_hosts(temp_hosts *[]common.Host, temp_host common.Host) {
+	// Iterate through the slice to check for duplicates
+	for index, host := range *temp_hosts {
 		if host.Host_name == temp_host.Host_name {
-			host = temp_host
-
-			return &temp_hosts
+			// If a duplicate is found, update the existing host
+			(*temp_hosts)[index] = temp_host
+			return
 		}
 	}
 
-	temp_hosts = append(temp_hosts, temp_host)
-	return &temp_hosts
+	// If no duplicate is found, append the new host
+	*temp_hosts = append(*temp_hosts, temp_host)
 }
 
 func register() {
@@ -152,11 +160,13 @@ func register() {
 		os.Exit(1)
 	}
 
-	temp_hosts := check_duplicated_hosts(*lib.Get_hosts_from_jsonfile("hosts.json"), *temp_host)
+	lib.Get_hosts_from_jsonfile("hosts.json")
+	check_duplicated_hosts(&common.Host_pool, *temp_host)
 
-	lib.Set_hosts_to_jsonfile(temp_hosts, "hosts.json")
+	lib.Set_hosts_to_jsonfile(&common.Host_pool, "hosts.json")
 
 	fmt.Printf("Registered host[%s]\n", temp_host.Host_name)
+	found_hosts = append(found_hosts[:chosen_hosts_index], found_hosts[chosen_hosts_index+1:]...)
 	fmt.Println()
 }
 
@@ -164,7 +174,7 @@ func register() {
 var registerHostsCmd = &cobra.Command{
 	Use:   "register_hosts",
 	Short: "Register new hosts.",
-	Long:  "This command will scan the zabbix database to find hosts that has names started with 'auto.' and register in hosts.ini file.",
+	Long:  "This command will scan hosts that starts with 'auto.linux.agent.' from zabbix database and register it in hosts.ini file.",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := check_id_rsa(); err != nil {
 			return err

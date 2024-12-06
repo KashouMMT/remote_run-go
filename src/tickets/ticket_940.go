@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/zukigit/remote_run-go/src/common"
-	"github.com/zukigit/remote_run-go/src/dao"
 	"github.com/zukigit/remote_run-go/src/lib"
 )
 
@@ -12,11 +11,11 @@ type Ticket_940 struct {
 	Ticket_no                                   uint
 	Ticket_description                          string
 	PASSED_count, FAILED_count, MUSTCHECK_count int
-	Testcases                                   []dao.TestCase
+	Testcases                                   []common.TestCase
 }
 
-func (t *Ticket_940) New_testcase(testcaseID uint, testcaseDescription string) *dao.TestCase {
-	return dao.New_testcase(testcaseID, testcaseDescription)
+func (t *Ticket_940) New_testcase(testcaseID uint, testcaseDescription string) *common.TestCase {
+	return common.New_testcase(testcaseID, testcaseDescription)
 }
 
 func (t *Ticket_940) Get_no() uint {
@@ -39,11 +38,11 @@ func (t *Ticket_940) Get_dsctn() string {
 	return t.Ticket_description
 }
 
-func (t *Ticket_940) Add_testcase(tc dao.TestCase) {
+func (t *Ticket_940) Add_testcase(tc common.TestCase) {
 	t.Testcases = append(t.Testcases, tc)
 }
 
-func (t *Ticket_940) Get_testcases() []dao.TestCase {
+func (t *Ticket_940) Get_testcases() []common.TestCase {
 	return t.Testcases
 }
 
@@ -84,7 +83,7 @@ func (t *Ticket_940) Add_testcases() {
 }
 
 // Consolidated function for applying all configurations at once, running Icon_100, and checking logs
-func (t *Ticket_940) applyConfigAndRunTests(tc *dao.TestCase, configs []string, configFilePath string) common.Testcase_status {
+func (t *Ticket_940) applyConfigAndRunTests(tc *common.TestCase, configs []string, configFilePath string) common.Testcase_status {
 	// Apply all configurations at once
 	for _, config := range configs {
 		sedCmd := fmt.Sprintf(`sed -i -e '$a\%s' %s`, config, configFilePath)
@@ -125,14 +124,14 @@ func (t *Ticket_940) applyConfigAndRunTests(tc *dao.TestCase, configs []string, 
 	logFilePath := "/var/log/jobarranger/jobarg_server.log"
 	cmd := fmt.Sprintf(`cat %s | grep "Process is taking"`, logFilePath)
 
-	tc.Info_log("Executing command: %s", cmd)
+	lib.Logi(common.LOG_LEVEL_INFO, "Executing command: %s", cmd)
 
 	output, err := lib.Ssh_exec_to_str(cmd)
 	if err != nil {
 		return t.logError(tc, "Failed to check timeout warnings, Error: %s", err.Error())
 	}
 
-	tc.Info_log("Command output: %s", output)
+	lib.Logi(common.LOG_LEVEL_INFO, "Command output: %s", output)
 
 	logCount := countOccurrences(output, "Process is taking")
 
@@ -159,8 +158,8 @@ func countOccurrences(str, substr string) int {
 	return count
 }
 
-func (t *Ticket_940) logError(tc *dao.TestCase, format string, args ...interface{}) common.Testcase_status {
-	fmt.Println(tc.Err_log(format, args...))
+func (t *Ticket_940) logError(tc *common.TestCase, format string, args ...interface{}) common.Testcase_status {
+	fmt.Println(lib.Logi(common.LOG_LEVEL_ERR, format, args...))
 	return FAILED
 }
 
@@ -170,7 +169,7 @@ func (t *Ticket_940) removeConfig(config, configFilePath string) error {
 	return err
 }
 
-func (t *Ticket_940) runIcon100(tc *dao.TestCase, job string) common.Testcase_status {
+func (t *Ticket_940) runIcon100(tc *common.TestCase, job string) common.Testcase_status {
 	envs, err := lib.Get_str_str_map("JA_HOSTNAME", "oss.linux", "JA_CMD", "sleep 30")
 	if err != nil {
 		return t.logError(tc, "Error retrieving environment variables: %s", err)
@@ -188,7 +187,7 @@ func (t *Ticket_940) runIcon100(tc *dao.TestCase, job string) common.Testcase_st
 	fmt.Printf("jobnet status: %s, job status: %s\n", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status)
 
 	if jobnet_run_info.Jobnet_status == "END" && jobnet_run_info.Job_status == "NORMAL" {
-		tc.Info_log("%s completed successfully.", job)
+		lib.Logi(common.LOG_LEVEL_INFO, "%s completed successfully.", job)
 		fmt.Printf("%s completed successfully.", job)
 		return PASSED
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/zukigit/remote_run-go/src/common"
-	"github.com/zukigit/remote_run-go/src/dao"
 	"github.com/zukigit/remote_run-go/src/lib"
 )
 
@@ -12,11 +11,11 @@ type Ticket_1292 struct {
 	Ticket_no                                   uint
 	Ticket_description                          string
 	PASSED_count, FAILED_count, MUSTCHECK_count int
-	Testcases                                   []dao.TestCase
+	Testcases                                   []common.TestCase
 }
 
-func (t *Ticket_1292) New_testcase(testcase_id uint, testcase_description string) *dao.TestCase {
-	return dao.New_testcase(testcase_id, testcase_description)
+func (t *Ticket_1292) New_testcase(testcase_id uint, testcase_description string) *common.TestCase {
+	return common.New_testcase(testcase_id, testcase_description)
 }
 
 func (t *Ticket_1292) Get_no() uint {
@@ -39,11 +38,11 @@ func (t *Ticket_1292) Get_dsctn() string {
 	return t.Ticket_description
 }
 
-func (t *Ticket_1292) Add_testcase(tc dao.TestCase) {
+func (t *Ticket_1292) Add_testcase(tc common.TestCase) {
 	t.Testcases = append(t.Testcases, tc)
 }
 
-func (t *Ticket_1292) Get_testcases() []dao.TestCase {
+func (t *Ticket_1292) Get_testcases() []common.TestCase {
 	return t.Testcases
 }
 
@@ -107,20 +106,20 @@ func (t *Ticket_1292) Add_testcases() {
 				_, sql_result := lib.Run_Sql_Script_Return_Rows("SELECT count(*) FROM ja_run_jobnet_table WHERE inner_jobnet_id = '" + jobnet_manage_id + "';")
 				if sql_result.Next() { // Move to the first row
 					if err := sql_result.Scan(&count); err != nil {
-						fmt.Println(tc_127.Err_log("Error: Error scanning result: %s", err))
+						fmt.Println(lib.Logi(common.LOG_LEVEL_ERR, "Error: Error scanning result: %s", err))
 						return false
 					}
 				}
 				if count > 0 {
-					fmt.Println(tc_127.Err_log("Error: Database is not empty!!!"))
+					fmt.Println(lib.Logi(common.LOG_LEVEL_ERR, "Error: Database is not empty!!!"))
 					return false
 				}
-				fmt.Println(tc_127.Info_log("Info: Database is empty."))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Database is empty."))
 				return true
 			}() {
 			fmt.Println("All operations completed successfully")
 		}
-		fmt.Println(tc_127.Info_log("Info: Resting config files back to normal parameter"))
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Resting config files back to normal parameter"))
 		if lib.Run_Sql_Script("UPDATE ja_parameter_table SET value = 60 WHERE parameter_name = 'JOBNET_KEEP_SPAN';") &&
 			lib.Run_Jobarg_cleanup_linux() {
 			if result {
@@ -128,7 +127,7 @@ func (t *Ticket_1292) Add_testcases() {
 			}
 			return FAILED
 		}
-		fmt.Println(tc_127.Info_log("Error: Failed at restting config files back to normal settings. Please reset the config files manually."))
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Error: Failed at restting config files back to normal settings. Please reset the config files manually."))
 		return MUST_CHECK
 	}
 	tc_127.Set_function(tc_func)

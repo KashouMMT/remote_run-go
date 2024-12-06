@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/zukigit/remote_run-go/src/common"
-	"github.com/zukigit/remote_run-go/src/dao"
 	"github.com/zukigit/remote_run-go/src/lib"
 	"github.com/zukigit/remote_run-go/src/tickets"
 	"gopkg.in/yaml.v3"
@@ -16,10 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var tkts, run_tickets []dao.Ticket
-var run_testcases []dao.TestCase
+var tkts, run_tickets []common.Ticket
+var run_testcases []common.TestCase
 
-func set_ticket_values(t []dao.Ticket) {
+func set_ticket_values(t []common.Ticket) {
 	for _, ticket := range t {
 		ticket.Set_values()
 	}
@@ -70,7 +69,7 @@ func add_run_testcases(testcase_number uint) {
 func save_runtks_records() {
 	yaml_data, err := yaml.Marshal(run_tickets)
 	if err != nil {
-		fmt.Println("Failed in getting password, Error:", err.Error())
+		fmt.Println("Failed in Marshaling run_tickets, Error:", err.Error())
 		os.Exit(1)
 	}
 
@@ -83,15 +82,22 @@ func save_runtks_records() {
 
 func run_tc() {
 	for _, testcase := range run_testcases {
-		dao.Run_testcase(testcase)
+		common.Current_tk_no = testcase.Get_ticket_no()
+		common.Current_tc_no = testcase.Get_no()
+
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "running..."))
+		if err := common.Run_testcase(testcase); err != nil {
+			lib.Logi(common.LOG_LEVEL_ERR, err.Error())
+		}
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "finished!"))
 	}
 
 	if len(run_testcases) > 0 {
-		dao.Update_testcase_results_in_tickets(run_tickets)
+		common.Update_testcase_results_in_tickets(run_tickets)
 		save_runtks_records()
 
 		fmt.Println(lib.Formatted_log(common.LOG_LEVEL_INFO, "Logged File: %s.log", common.Log_filepath))
-		fmt.Println(lib.Formatted_log(common.LOG_LEVEL_ERR, "Yaml File: %s.yml", common.Log_filepath))
+		fmt.Println(lib.Formatted_log(common.LOG_LEVEL_INFO, "Yaml File: %s.yml", common.Log_filepath))
 	} else {
 		fmt.Println("There is no testcase to run.")
 	}
@@ -103,6 +109,10 @@ var rootCmd = &cobra.Command{
 	Short: "Automated testing",
 	Long:  "Automated testing",
 	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
+			return err
+		}
+
 		if err := common.Set_db_type(); err != nil {
 			return err
 		}
@@ -119,11 +129,6 @@ var rootCmd = &cobra.Command{
 		lib.Set_common_client(common.Login_info.Username, common.Login_info.Password, common.Login_info.Hostname, common.Login_info.Port)
 		defer common.Client.Close()
 
-		if err := lib.Set_host_pool(); err != nil {
-			fmt.Println("Failed in creating host pool, use 'register_hosts' command to fix, Err:", err.Error())
-			os.Exit(1)
-		}
-
 		common.Log_filepath = lib.Get_filepath()
 		common.Set_sugar(common.Log_filepath + ".log")
 		defer common.Sugar.Sync()
@@ -133,6 +138,11 @@ var rootCmd = &cobra.Command{
 		common.Set_default_db_port()
 		lib.ConnectDB(common.DB_user, common.DB_passwd, common.DB_name)
 		defer common.DB.Close()
+
+		if err := lib.Set_host_pool(); err != nil {
+			fmt.Println("Failed in creating host pool, use 'register_hosts' command to fix, Err:", err.Error())
+			os.Exit(1)
+		}
 
 		lib.Enable_common_jobnets()
 
@@ -170,7 +180,7 @@ func init() {
 }
 
 // Add your tickets here
-func add_tickets(t *[]dao.Ticket) {
+func add_tickets(t *[]common.Ticket) {
 	*t = append(*t, new(tickets.Ticket_000))
 	*t = append(*t, new(tickets.Ticket_010))
 	*t = append(*t, new(tickets.Ticket_698))

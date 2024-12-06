@@ -197,8 +197,32 @@ func Set_common_client(username, passwd, hostname string, port int) {
 	common.Client = GetSSHClient(hostname, port, username, passwd)
 }
 
+func update_hosts_ips() {
+	for i := range common.Host_pool {
+		host := &(common.Host_pool)[i]
+
+		rows, err := GetData(`select i.useip, i.dns, i.ip from hosts h, interface i
+							where h.hostid = i.hostid and i.main = 1 and i.type = 1 and h.host = $1`, host.Host_name)
+		if err != nil {
+			fmt.Println("Failed in quering hosts, Error:", err.Error())
+			os.Exit(1)
+		}
+		defer rows.Close()
+
+		i := 0
+		for rows.Next() {
+			if err := rows.Scan(&host.Host_use_ip, &host.Host_dns, &host.Host_ip); err != nil {
+				fmt.Println("Failed in scanning hosts, Error:", err.Error())
+				os.Exit(1)
+			}
+			i++
+		}
+	}
+}
+
 func Set_host_pool() error {
-	common.Host_pool = Get_hosts_from_jsonfile("hosts.json")
+	Get_hosts_from_jsonfile("hosts.json")
+	update_hosts_ips()
 
 	current_user, err := user.Current()
 	if err != nil {
@@ -206,8 +230,8 @@ func Set_host_pool() error {
 	}
 	ssh_key_filepath := filepath.Join(current_user.HomeDir, ".ssh")
 
-	for i := range *common.Host_pool {
-		host := &(*common.Host_pool)[i] // Get a pointer to the actual host
+	for i := range common.Host_pool {
+		host := &(common.Host_pool)[i] // Get a pointer to the actual host
 		if host.Host_use_ip {
 			host.Host_client, err = GetSSHClientWithKey(host.Host_ip, host.Host_port, host.Host_run_username, ssh_key_filepath)
 		} else {

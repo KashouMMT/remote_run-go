@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/zukigit/remote_run-go/src/common"
-	"github.com/zukigit/remote_run-go/src/dao"
 	"github.com/zukigit/remote_run-go/src/lib"
 )
 
@@ -14,11 +13,11 @@ type Ticket_1264 struct {
 	Ticket_no                                   uint
 	Ticket_description                          string
 	PASSED_count, FAILED_count, MUSTCHECK_count int
-	Testcases                                   []dao.TestCase
+	Testcases                                   []common.TestCase
 }
 
-func (t *Ticket_1264) New_testcase(testcase_id uint, testcase_description string) *dao.TestCase {
-	return dao.New_testcase(testcase_id, testcase_description)
+func (t *Ticket_1264) New_testcase(testcase_id uint, testcase_description string) *common.TestCase {
+	return common.New_testcase(testcase_id, testcase_description)
 }
 
 func (t *Ticket_1264) Get_no() uint {
@@ -41,11 +40,11 @@ func (t *Ticket_1264) Get_dsctn() string {
 	return t.Ticket_description
 }
 
-func (t *Ticket_1264) Add_testcase(tc dao.TestCase) {
+func (t *Ticket_1264) Add_testcase(tc common.TestCase) {
 	t.Testcases = append(t.Testcases, tc)
 }
 
-func (t *Ticket_1264) Get_testcases() []dao.TestCase {
+func (t *Ticket_1264) Get_testcases() []common.TestCase {
 	return t.Testcases
 }
 
@@ -141,8 +140,8 @@ func (t *Ticket_1264) Add_testcases() {
 			}() &&
 			func() bool {
 				result, jobnet_run_info := lib.Run_Jobarg_get_jobnet_run_info(jobnet_manage_id)
-				fmt.Println(tc_125.Info_log("Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
-				fmt.Println(tc_125.Info_log("Info: Everything works normally."))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Everything works normally."))
 				return result
 			}() &&
 			lib.Run_Set_Config_Linux("DBPassword=zabbix", "DBPassword=YOUR_INCORRECT_PASSWORD", "/etc/jobarranger/jobarg_server.conf", 2) &&
@@ -153,8 +152,8 @@ func (t *Ticket_1264) Add_testcases() {
 			}() &&
 			func() bool {
 				result, jobnet_run_info := lib.Run_Jobarg_get_jobnet_run_info(jobnet_manage_id)
-				fmt.Println(tc_125.Info_log("Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
-				fmt.Println(tc_125.Info_log("Info: Everything works normally."))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Everything works normally."))
 				return result
 			}() &&
 			lib.Run_Set_Config_Linux("DBPassword=YOUR_INCORRECT_PASSWORD", "DBPassword=zabbix", "/etc/jobarranger/jobarg_server.conf", 2) &&
@@ -166,13 +165,13 @@ func (t *Ticket_1264) Add_testcases() {
 			}() &&
 			func() bool {
 				result, jobnet_run_info := lib.Run_Jobarg_get_jobnet_run_info(jobnet_manage_id)
-				fmt.Println(tc_125.Info_log("Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
-				fmt.Println(tc_125.Info_log("Info: Everything works normally."))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Jobnet Status: %s, Job Status: %s,Std Out: %s", jobnet_run_info.Jobnet_status, jobnet_run_info.Job_status, jobnet_run_info.Std_out))
+				fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Everything works normally."))
 				return result
 			}() {
 			fmt.Println("All operations completed successfully")
 		}
-		fmt.Println(tc_125.Info_log("Info: Resting config files back to normal."))
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Info: Resting config files back to normal."))
 		if lib.Run_Linux_Command("rm -rf /usr/local/bin/jobarg_json_parse") &&
 			lib.Run_Linux_Command("rm -rf /etc/jobarranger/jobarg_server.conf") &&
 			lib.Run_Linux_Command("rm -rf /etc/jobarranger/web/jam.config.php") &&
@@ -194,7 +193,7 @@ func (t *Ticket_1264) Add_testcases() {
 			}
 			return FAILED
 		}
-		fmt.Println(tc_125.Info_log("Error: Failed at restting config files back to normal settings. Please reset the config files manually."))
+		fmt.Println(lib.Logi(common.LOG_LEVEL_INFO, "Error: Failed at restting config files back to normal settings. Please reset the config files manually."))
 		return MUST_CHECK
 	}
 	tc_125.Set_function(tc_func)
