@@ -45,17 +45,17 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 
 		for _, value := range returnValues {
 			if err, ok := value.(error); ok && err != nil {
-				fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Function %s() returned an error: %v", func_name, err)))
+				fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Error: %s() returned an error: %v", func_name, err)))
 				return FunctionResult{ReturnResult: false}
 			}
 		}
 
-		fmt.Println(Logi(common.LOG_LEVEL_INFO, fmt.Sprintf("Function %s() call succeed.", func_name)))
+		fmt.Println(Logi(common.LOG_LEVEL_INFO, fmt.Sprintf("Info: %s() call succeed.", func_name)))
 
 		return FunctionResult{ReturnResult: true, ReturnValues: returnValues}
 
 	} else {
-		fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Function %s() not found.", func_name)))
+		fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Error: %s() not found.", func_name)))
 
 		return FunctionResult{ReturnResult: false}
 	}
