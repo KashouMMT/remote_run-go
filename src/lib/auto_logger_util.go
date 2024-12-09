@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/spf13/cast"
 	"github.com/zukigit/remote_run-go/src/common"
 )
 
@@ -45,12 +46,20 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 
 		for _, value := range returnValues {
 			if err, ok := value.(error); ok && err != nil {
-				fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Error: %s() returned an error: %v", func_name, err)))
+				fmt.Println(Logi(common.LOG_LEVEL_ERR, fmt.Sprintf("Error: %s() returned an error: %s", func_name, err.Error())))
 				return FunctionResult{ReturnResult: false}
 			}
 		}
 
-		fmt.Println(Logi(common.LOG_LEVEL_INFO, fmt.Sprintf("Info: %s() call succeed.", func_name)))
+		var log_string string
+
+		log_string = fmt.Sprintf("Info: %s() called successfully. Parameter:", func_name)
+
+		for iteration, parameter := range param {
+			log_string += fmt.Sprintf(" (%d) %s,", iteration+1, CastToString(parameter))
+		}
+
+		fmt.Println(Logi(common.LOG_LEVEL_INFO, log_string))
 
 		return FunctionResult{ReturnResult: true, ReturnValues: returnValues}
 
@@ -59,4 +68,24 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 
 		return FunctionResult{ReturnResult: false}
 	}
+}
+
+func Self_Reflect_lib_Folder() map[string]interface{} {
+
+}
+
+func CastToStringArray(input []interface{}) []string {
+	var stringArray []string
+	for _, value := range input {
+		stringArray = append(stringArray, CastToString(value))
+	}
+	return stringArray
+}
+
+func CastToString(input interface{}) string {
+	value, err := cast.ToStringE(input)
+	if err != nil {
+		value = "<TypeCast Error>"
+	}
+	return value
 }

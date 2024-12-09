@@ -63,14 +63,13 @@ func (t *Ticket_111) Add_testcases() {
 			func() bool {
 				returnValues := lib.Run_function("Jobarg_exec", "SIMPLE_JOB")
 				result := returnValues.ReturnResult
-				jobnet_run_info = returnValues.ReturnValues[0].(string)
+				jobnet_run_info = lib.CastToString(returnValues.ReturnValues[0])
 				return result
 			}() &&
 			lib.Run_function("Jobarg_get_jobnet_run_info", jobnet_run_info).ReturnResult &&
 			lib.Run_function("Clear_linux_jaz_agent_log").ReturnResult {
 			return PASSED
 		}
-
 		return FAILED
 	}
 	tc_1.Set_function(tc_func)
