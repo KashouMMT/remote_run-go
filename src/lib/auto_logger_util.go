@@ -3,6 +3,7 @@ package lib
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/cast"
 	"github.com/zukigit/remote_run-go/src/common"
@@ -11,16 +12,6 @@ import (
 type FunctionResult struct {
 	ReturnResult bool
 	ReturnValues []interface{}
-}
-
-var funcMap = map[string]interface{}{
-	"Restart_jaz_agent_linux":    Restart_jaz_agent_linux,
-	"Jobarg_enable_jobnet":       Jobarg_enable_jobnet,
-	"Jobarg_exec":                Jobarg_exec,
-	"Clear_linux_jaz_agent_log":  Clear_linux_jaz_agent_log,
-	"Jobarg_cleanup_linux":       Jobarg_cleanup_linux,
-	"Jobarg_exec_E":              Jobarg_exec_E,
-	"Jobarg_get_jobnet_run_info": Jobarg_get_jobnet_run_info,
 }
 
 func Run_function(func_name string, param ...interface{}) FunctionResult {
@@ -51,12 +42,10 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 			}
 		}
 
-		var log_string string
-
-		log_string = fmt.Sprintf("Info: %s() called successfully. Parameter:", func_name)
+		log_string := fmt.Sprintf("Info: %s() called successfully. Parameter:", func_name)
 
 		for iteration, parameter := range param {
-			log_string += fmt.Sprintf(" (%d) %s,", iteration+1, CastToString(parameter))
+			log_string += fmt.Sprintf(" (%d)%s = %s,", iteration+1, reflect.TypeOf(parameter).String(), CastToString(parameter))
 		}
 
 		fmt.Println(Logi(common.LOG_LEVEL_INFO, log_string))
@@ -70,10 +59,6 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 	}
 }
 
-func Self_Reflect_lib_Folder() map[string]interface{} {
-
-}
-
 func CastToStringArray(input []interface{}) []string {
 	var stringArray []string
 	for _, value := range input {
@@ -83,6 +68,9 @@ func CastToStringArray(input []interface{}) []string {
 }
 
 func CastToString(input interface{}) string {
+	if strings.Contains(reflect.TypeOf(input).String(), "[]") {
+		return fmt.Sprintf("%v", input)
+	}
 	value, err := cast.ToStringE(input)
 	if err != nil {
 		value = "<TypeCast Error>"
