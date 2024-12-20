@@ -57,14 +57,19 @@ func (t *Ticket_111) Add_testcases() {
 	tc_func := func() common.Testcase_status {
 
 		var jobnet_run_info string
+		var env map[string]string
 
 		if lib.Run_function("Jobarg_cleanup_linux").ReturnResult &&
-			lib.Run_function("Jobarg_enable_jobnet", "SIMPLE_JOB", "SIMPLE_JOB").ReturnResult &&
+			lib.Run_function("Jobarg_enable_jobnet", "Icon_1", "jobicon_linux").ReturnResult &&
 			func() bool {
-				returnValues := lib.Run_function("Jobarg_exec", "SIMPLE_JOB")
-				result := returnValues.ReturnResult
-				jobnet_run_info = lib.CastToString(returnValues.ReturnValues[0])
-				return result
+				values := lib.Run_function("Get_str_str_map", "JA_HOSTNAME", "oss.linux", "JA_CMD", "hostname")
+				env = lib.CastToStringMapString(values.ReturnValues[0])
+				return values.ReturnResult
+			}() &&
+			func() bool {
+				values := lib.Run_function("Jobarg_exec_E", "SIMPLE_JOB", env)
+				jobnet_run_info = lib.CastToString(values.ReturnValues[0])
+				return values.ReturnResult
 			}() &&
 			lib.Run_function("Jobarg_get_jobnet_run_info", jobnet_run_info).ReturnResult &&
 			lib.Run_function("Clear_linux_jaz_agent_log").ReturnResult {

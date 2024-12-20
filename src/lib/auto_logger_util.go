@@ -59,6 +59,17 @@ func Run_function(func_name string, param ...interface{}) FunctionResult {
 	}
 }
 
+func CastToStringMapString(input interface{}) map[string]string {
+
+	value, err := cast.ToStringMapStringE(input)
+	if err != nil {
+		fmt.Println(Logi(common.LOG_LEVEL_ERR, "Error: Typecasting to map[string]string failed."))
+		return nil
+	}
+
+	return value
+}
+
 func CastToStringArray(input []interface{}) []string {
 	var stringArray []string
 	for _, value := range input {
